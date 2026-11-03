@@ -6,7 +6,7 @@ name: fm1
 
 on:
   push:
-    branches: [main]
+    branches: [main, keyseq]
   workflow_dispatch:
 
 jobs:

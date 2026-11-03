@@ -36,7 +36,7 @@
  * Rules of the road (the chip has no FPU and no libgcc): integers only, no float, no 64-bit division.
  * tests/host.c runs this file on a computer: the screen as a PNG, the sound as a WAV. */
 #define APP_NAME "QUORUM"
-#define Q_VERSION "1.1"
+#define Q_VERSION "1.1-diag"
 static void app_idle(void);
 #define LCD_IDLE app_idle                       /* while the screen's DMA runs: the clock and MIDI keep going */
 #define CV_MAX (240u * 218u)                    /* the page body's canvas */
@@ -2031,6 +2031,7 @@ static uint32_t kc_pos, kc_note = 45, kc_len = 1, kc_place, kc_picked, kv_top = 
 #define KV_ROWS 14u
 #define KS_SPP 4u                               /* steps a page */
 static uint32_t kt_seen, kt_tick, kt_dur, rec_key, rec_pos, rec_note, rec_tick0;
+static int32_t dg_bo = -1; static uint32_t dg_t, dg_held;   /* (diagnostic: the triangles' timing on the screen) */
 static void draw_keys(void)
 {
     const kseq_t *q = &P.ks;
@@ -2076,6 +2077,7 @@ static void draw_keys(void)
          * its triangle up, brighter: always one, each for a step exactly (the sequencer's own count: no drift) */
         int32_t bo = (int32_t)((q->run && pos >= p0 && pos < p0 + KS_SPP ? pos : kc_pos >= p0 ? kc_pos : p0) - p0);
         bo = cl(bo, 0, 3);
+        if (bo != dg_bo) { dg_held = fm1_ms - dg_t; dg_t = fm1_ms; dg_bo = bo; }   /* (diagnostic: how long it was up) */
         for (j = 0; j < 4u; j++) {
             int32_t xc = x0 + lw * (int32_t)j / 3, on = (int32_t)j == bo, h = on ? 7 : 5, apex = on ? 115 : 119, k;
             if (j == 1u || j == 2u) for (k = y0; k < 113; k += 2) cv_pset(xc, k, PH_LO);
@@ -2090,7 +2092,7 @@ static void draw_keys(void)
     else if (ks_clr && fm1_ms - t_clr < 2000u) s_cat(s, "SEQ AGAIN: CLEAR ALL NOTES");
     else if (ks_auto) s_cat(s, "AUTO: A KEY STARTS RECORDING");
     else if (ks_rec) s_cat(s, "RECORDING: PLAY THE KEYS");
-    else if (q->run) { s_cat(s, "RUNNING  KEYS TRANSPOSE "); s_sdec(s, (int32_t)P.root - ks_base, 1u, 0u); }
+    else if (q->run) { s_cat(s, "TICK "); s_int(s, (int32_t)kt_dur); s_cat(s, "MS  BOOP "); s_int(s, (int32_t)dg_held); s_cat(s, "MS"); }   /* (diagnostic) */
     else s_cat(s, "STOPPED  (REC RECORDS)");
     cv_text(4, 144, &FONT_S, s, kc_place || ks_rec || ks_auto || ks_clr ? PH_HI : PH_LO);
     knob_row(0);
