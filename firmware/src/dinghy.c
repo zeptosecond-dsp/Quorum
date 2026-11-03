@@ -36,7 +36,7 @@
  * Rules of the road (the chip has no FPU and no libgcc): integers only, no float, no 64-bit division.
  * tests/host.c runs this file on a computer: the screen as a PNG, the sound as a WAV. */
 #define APP_NAME "QUORUM"
-#define Q_VERSION "1.0"
+#define Q_VERSION "1.1"
 static void app_idle(void);
 #define LCD_IDLE app_idle                       /* while the screen's DMA runs: the clock and MIDI keep going */
 #define CV_MAX (240u * 218u)                    /* the page body's canvas */
@@ -356,7 +356,7 @@ static int32_t quantise(int32_t q, int32_t *stepn)   /* a pitch (1/256 semitone)
     return (int32_t)P.sroot * 256 + k * per + bv;
 }
 static volatile uint32_t qpulse_v[2];           /* a quantiser's note-change gate: blocks still high */
-static volatile uint32_t ks_pos_v, ks_note_v, ks_gate_v, ks_tick_v, ks_restart_v, ks_kick_v, ks_start_v;
+static volatile uint32_t ks_pos_v, ks_note_v, ks_gate_v, ks_tick_v, ks_restart_v, ks_kick_v, ks_start_v, ks_now_v;
 static int32_t ks_base = 45;                    /* the root when the keyboard sequencer started: a key since transposes it */
 static int32_t off_tgt[2], off_cur[2], off_step[2], pitch_mod[2];   /* (pitch_mod: the matrix, 1/256 semitone) */   /* each path's pitch offset (1/256 semitone): where it goes, where it is */
 static uint32_t t_glide;
@@ -845,6 +845,7 @@ static void ks_block(void)
             ks_ph = ph;
         } else go = stp != ks_clk_prev && stp % DIVS[10u - q->clk] == 0u;   /* the master clock, every /n steps */
         ks_clk_prev = stp;
+        if (ks_now_v) { go = 1; ks_now_v = 0; ks_ph = 0; }   /* (started: the first step at once, not at the next tick) */
         if (go) {
             if (ks_restart_v) { pos = 0; ks_pend = 0; ks_restart_v = 0; }
             else if (q->dir == SD_RND) { isr_rnd ^= isr_rnd << 13; isr_rnd ^= isr_rnd >> 17; isr_rnd ^= isr_rnd << 5; pos = (isr_rnd >> 16) % steps; }
@@ -2026,7 +2027,7 @@ static void draw_fg(void)                       /* a function generator or an SS
  * an octave and a bit down the side (the black keys' rows shaded); the notes as bars, the one playing bright; under the
  * steps a row of triangles, the step playing "booping" up; the cursor, or the bar being placed (flashing). The page
  * shown: the cursor's, or (running, untouched for 3 s) the playhead's */
-static uint32_t kc_pos, kc_note = 45, kc_len = 1, kc_place, kc_picked, kv_top = 52, ks_rec, t_kedit;
+static uint32_t kc_pos, kc_note = 45, kc_len = 1, kc_place, kc_picked, kv_top = 52, ks_rec, t_kedit, ks_auto, ks_clr, t_clr, ks_run_was;
 #define KV_ROWS 14u
 #define KS_SPP 4u                               /* steps a page */
 static uint32_t kt_seen, kt_tick, kt_dur, rec_key, rec_pos, rec_note, rec_tick0;
@@ -2071,14 +2072,10 @@ static void draw_keys(void)
         }
     }
     {   /* page R's triangles: four along the lane, the first at its left corner, the last at its right, the middle two
-         * with their lines up through the roll; the one nearest where the playhead is (running, on this page: its step
-         * and how far through it) or the cursor is boops up, brighter: always one */
-        int32_t pc, bo;                         /* the place along the lane, Q8 steps */
-        if (q->run && pos >= p0 && pos < p0 + KS_SPP) {
-            int32_t f = kt_dur ? (int32_t)((fm1_ms - kt_tick) * 256u / kt_dur) : 0;
-            pc = (int32_t)(pos - p0) * 256 + cl(f, 0, 255);
-        } else pc = (int32_t)(kc_pos >= p0 ? kc_pos - p0 : 0u) * 256;
-        bo = cl((pc * 3 + 512) / 1024, 0, 3);
+         * with their lines up through the roll; the page's step playing (running, on this page) or the cursor's boops
+         * its triangle up, brighter: always one, each for a step exactly (the sequencer's own count: no drift) */
+        int32_t bo = (int32_t)((q->run && pos >= p0 && pos < p0 + KS_SPP ? pos : kc_pos >= p0 ? kc_pos : p0) - p0);
+        bo = cl(bo, 0, 3);
         for (j = 0; j < 4u; j++) {
             int32_t xc = x0 + lw * (int32_t)j / 3, on = (int32_t)j == bo, h = on ? 7 : 5, apex = on ? 115 : 119, k;
             if (j == 1u || j == 2u) for (k = y0; k < 113; k += 2) cv_pset(xc, k, PH_LO);
@@ -2090,10 +2087,12 @@ static void draw_keys(void)
     cv_text(4, 128, &FONT_S, s, PH_MID);
     s[0] = 0;
     if (kc_place) s_cat(s, kc_picked ? "MOVING: PLAY PUT, SEL DELETE" : "PLACING: PLAY PUT, SEL DROP");
+    else if (ks_clr && fm1_ms - t_clr < 2000u) s_cat(s, "SEQ AGAIN: CLEAR ALL NOTES");
+    else if (ks_auto) s_cat(s, "AUTO: A KEY STARTS RECORDING");
     else if (ks_rec) s_cat(s, "RECORDING: PLAY THE KEYS");
     else if (q->run) { s_cat(s, "RUNNING  KEYS TRANSPOSE "); s_sdec(s, (int32_t)P.root - ks_base, 1u, 0u); }
     else s_cat(s, "STOPPED  (REC RECORDS)");
-    cv_text(4, 144, &FONT_S, s, kc_place || ks_rec ? PH_HI : PH_LO);
+    cv_text(4, 144, &FONT_S, s, kc_place || ks_rec || ks_auto || ks_clr ? PH_HI : PH_LO);
     knob_row(0);
     footer("ALG STEP PRES NOTE SELECT LEN");
     cv_out(BODY_Y);
@@ -3056,7 +3055,13 @@ static void app_main(void)
             if (b & (1u << BTN_EDIT)) np = shift ? PG_SPLIT : PG_VOICE;
             if (b & (1u << BTN_LFO)) np = shift ? PG_LOGIC : PG_GRID;
             if (b & (1u << BTN_ENV)) np = shift ? PG_FG : PG_STRIKE;
-            if (b & (1u << BTN_SEQ)) np = PG_SEQ;
+            if (b & (1u << BTN_SEQ)) {          /* (on the keyboard sequencer, SEQ again, twice: clear its notes) */
+                if (page == PG_SEQ && sub >= NSEQ) {
+                    if (ks_clr && fm1_ms - t_clr < 2000u) { uint32_t j; for (j = 0; j < KS_N; j++) P.ks.note[j] = P.ks.len[j] = 0; kc_place = 0; ks_clr = 0; }
+                    else { ks_clr = 1; t_clr = fm1_ms; }
+                }
+                np = PG_SEQ;
+            }
             if (b & (1u << BTN_ARP)) np = shift ? PG_GMAT : PG_MOD;
             if (b & (1u << BTN_FX)) { if (page == PG_FX) { sub = (sub + 1u) % 4u; bank = 0; hdr = 1; } np = PG_FX; }   /* (again: the next) */
             if (b & (1u << BTN_GLO)) np = PG_GLOBAL;
@@ -3140,7 +3145,13 @@ static void app_main(void)
             if (kc_len > steps - kc_pos) kc_len = steps - kc_pos;
             if ((b & (1u << BTN_SEL)) && kc_place) kc_place = 0;   /* drop the bar (a note picked up: deleted) */
         }
-        if (b & (1u << BTN_REC)) {              /* REC: record from the keys (and run, if it was stopped) */
+        if (ks_clr && fm1_ms - t_clr >= 2000u) ks_clr = 0;
+        if ((b & (1u << BTN_REC)) && shift) {   /* SEL + REC: AUTO, armed: stopped, the first key starts it from step 1,
+                                                   recording (again: disarmed) */
+            ks_auto ^= 1u;
+            if (ks_auto) { P.ks.run = 0; ks_rec = 0; ks_run_was = 0; }
+        } else if (b & (1u << BTN_REC)) {       /* REC: record from the keys (and run, if it was stopped) */
+            ks_auto = 0;
             ks_rec ^= 1u;
             if (ks_rec) P.ks.run = 1;
         }
@@ -3225,14 +3236,21 @@ static void app_main(void)
         down &= (1u << 25u) - 1u;
         {                                       /* the keyboard sequencer started: the root now is its key (a key since
                                                    transposes it); stopped: no recording */
-            static uint32_t run_was;
-            if (P.ks.run && !run_was) { ks_base = P.root; ks_restart_v = 1; ks_note_v = 0; }
+            if (P.ks.run && !ks_run_was) { ks_base = P.root; ks_note_v = 0; ks_restart_v = 1; ks_now_v = 1; ks_auto = 0; }
             if (!P.ks.run) { ks_rec = 0; ks_note_v = 0; }
-            run_was = P.ks.run;
+            ks_run_was = P.ks.run;
         }
         if (down) {                             /* the lowest key pressed (below the top two): the root, F1 .. F3 */
             for (i = 0; i < 25u; i++) if ((down >> i) & 1u) break;
-            if (P.ks.run && ks_rec) {           /* recording: the note in at the step playing (or the next, if nearer) */
+            if (ks_auto && !P.ks.run) {         /* AUTO: this key on step 1, the sequencer away from it, recording */
+                uint32_t note = 29u + i;
+                ks_auto = 0;
+                ks_put(0, note, 1);
+                ks_base = P.root; ks_note_v = 0; ks_restart_v = 1; ks_now_v = 1;   /* (first: then run) */
+                rec_tick0 = ks_tick_v + 1u;
+                P.ks.run = 1; ks_run_was = 1; ks_rec = 1;
+                rec_key = 1u << i; rec_pos = 0; rec_note = note; kc_note = note; kc_pos = 0;
+            } else if (P.ks.run && ks_rec) {    /* recording: the note in at the step playing (or the next, if nearer) */
                 uint32_t steps = P.ks.steps < 1u ? 1u : P.ks.steps > KS_MAX ? KS_MAX : P.ks.steps, pos = ks_pos_v, note = 29u + i;
                 if (kt_dur && (fm1_ms - kt_tick) * 2u > kt_dur) { pos = pos + 1u >= steps ? 0u : pos + 1u; rec_tick0 = ks_tick_v + 1u; }
                 else { rec_tick0 = ks_tick_v; ks_note_v = note; ks_start_v = pos; ks_kick_v = 1; }   /* (heard at once) */
@@ -3306,7 +3324,8 @@ static void app_main(void)
                                   || (page == PG_SPLIT && sub && (P.kbd[(sub - 1u) & 1u] || blink)));
             fm1_led_key(BTN_FX, page == PG_FX && blink);   /* FX again: the next effect */
             fm1_led_key(BTN_SAVE, page == PG_PATCH && (pconf == PC_SAVE || blink));
-            fm1_led_key(BTN_REC, ks_rec || (page == PG_SEQ && sub >= NSEQ && blink));   /* solid: recording */
+            fm1_led_key(BTN_REC, ks_rec || (ks_auto && (fm1_ms / 120u) & 1u) || (page == PG_SEQ && sub >= NSEQ && blink));   /* solid: recording; fast: AUTO */
+            fm1_led_key(BTN_SEQ, page == PG_SEQ && sub >= NSEQ && ks_clr && (fm1_ms / 120u) & 1u);   /* fast: SEQ again clears */
         }
     }
 }

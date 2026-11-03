@@ -1,0 +1,27 @@
+# Quorum 1.1: the keyboard sequencer's AUTO (SEL + REC: armed; the first key starts it from step 1, recording) and
+# its clear (SEQ again, twice); the triangles: step n of the page, triangle n
+4000 btn 11
+4100 btn 0
+4200 enc 4 60
+4400 btndown 3
+4450 btn 13
+4500 btnup 3
+4700 shot
+5000 keys 0x10
+5600 keys 0x0
+6400 keys 0x80
+6700 keys 0x0
+7600 keys 0x200
+7900 keys 0x0
+8000 shot
+8150 shot
+8300 shot
+8450 shot
+8600 shot
+8750 shot
+11000 shot
+11200 btn 11
+11300 shot
+11500 btn 11
+11700 shot
+13000 end

@@ -84,16 +84,18 @@ Thirteen pages, each reachable from the index or its shortcut button.
 On the SEQUENCERS page, OCT past SEQ 3 to KEYS: a piano roll of up to 16 steps, one note at a time, laid out as the
 Fairlight's page R. Four steps show at a time, with a page for each four (PG 1/4 and so on); the page follows the cursor
 while you edit, and the playhead while it runs. Under the lane are four triangles, from its bottom-left corner to its
-bottom-right, the middle two with grid lines up through the roll: the one nearest the playhead "boops" up (when it's
-stopped, the one nearest the cursor), so one is always up.
+bottom-right, the middle two with grid lines up through the roll: each "boops" up for its step as the playhead
+passes (the first triangle for the page's first step, and so on; when it's stopped, the cursor's), so one is always up.
 
 - **Placing notes.** PLAY brings up a note bar, flashing. PRESETS moves it up and down, ALGORITHM along (on to the next page and back), SELECT makes it
   longer (clockwise) or shorter. PLAY again puts it down. PLAY on a note picks it up to move it; SEL drops the bar
-  (which deletes a note you picked up). Hold SEL and press PLAY to clear the roll.
+  (which deletes a note you picked up). To clear the roll, press SEQ twice (it flashes after the first), or hold SEL
+  and press PLAY.
 - **Knobs.** STEPS (1 to 16), DIR, CLOCK (turn left to follow the master clock, /32 to /1; turn right for its own,
   0.05 to 12 steps a second), RUN.
 - **Recording.** REC records from the keys as it runs (and starts it): notes land on the nearest step, and a held key
-  makes a longer note.
+  makes a longer note. **AUTO** (hold SEL, press REC; REC flashes fast) stops it and waits: the first key you play
+  starts it from step 1, recording, with that note on step 1. Hold SEL and press REC again to call it off.
 - **Playing.** Its notes move the paths that track the keyboard. While it runs, a key transposes it. Each note sends a
   gate (KEYS) to the gate matrix: pin it to a strike to hear each note struck. The paths have no envelope of their
   own, so empty steps hold the last pitch; the strikes and FGs give the notes their shape.
