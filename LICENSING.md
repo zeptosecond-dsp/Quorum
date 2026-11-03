@@ -5,7 +5,7 @@ Quorum is free software under the GNU General Public License, version 3 only (`G
 `tunings.h`, `luts.h`, `font_chunky.h`), `tools/gen_ca_tables.py`, `tools/gen_tables.py`, `tools/gen_font8.py`,
 `tools/preview_tables.py`, `tools/fm1_winmidi.py`, the host scripts in `tests/scripts/` and `docs/QUICKSTART.md` are by
 Zeptosecond DSP, written by machine (Claude, by Anthropic) with human guidance; `verb.h` (the reverb), `tunings.h`,
-`luts.h` and `wt_tables.h` come from its sister, Arcturus S6 (the `main` branch). Everything else is Dinghy's, as below.
+`luts.h` and `wt_tables.h` come from its sister, [Arcturus S6](https://github.com/zeptosecond-dsp/Arcturus-S6). Everything else is Dinghy's, as below.
 
 ---
 

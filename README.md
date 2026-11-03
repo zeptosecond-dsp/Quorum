@@ -6,7 +6,7 @@
 generative, evolving soundscapes, where cellular automata decide which harmonics sound, with the sound and look of
 early digital machines.
 
-Quorum is the sister of [Arcturus S6](../../tree/main). Arcturus sweeps wavetables; Quorum builds its sound from 64
+Quorum is the sister of [Arcturus S6](https://github.com/zeptosecond-dsp/Arcturus-S6). Arcturus sweeps wavetables; Quorum builds its sound from 64
 sine partials in the manner of the Kawai K5, and lets two rows of cellular automata switch them on and off. Strikes
 ring parts of the overtone series by hand or by logic, every partial is split into two paths with their own filters,
 and Serge-style modulators, sequencers and two patch matrices keep the whole thing moving. The engine runs at 22.05kHz
@@ -73,8 +73,8 @@ git clone --depth 1 --branch AC79NN_SDK_V1.2.1_2023-12-13 \
 tests/run_host.sh tests/scripts/quorum10.txt   # the firmware on your computer: build/host/*.wav and screen PNGs
 ```
 
-Quorum lives on the `cellular-s6` branch. GitHub builds every push to it, and a tag `quorum-vX.Y` builds, tests and
-publishes a release with a build attestation. The firmware itself is [firmware/src/dinghy.c](firmware/src/dinghy.c)
+GitHub builds every push to `main`, and a tag `vX.Y` builds, tests and publishes a release with a build
+attestation. The firmware itself is [firmware/src/dinghy.c](firmware/src/dinghy.c)
 and [firmware/src/verb.h](firmware/src/verb.h) (the reverb, from Arcturus S6); the lookup tables come from
 [tools/gen_ca_tables.py](tools/gen_ca_tables.py). Dinghy's own docs, for the platform under it:
 [docs/API.md](docs/API.md), [docs/RULES.md](docs/RULES.md), [docs/MAKE-IT-YOURS.md](docs/MAKE-IT-YOURS.md).
