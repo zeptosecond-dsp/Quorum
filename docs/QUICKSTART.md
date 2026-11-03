@@ -83,7 +83,9 @@ Thirteen pages, each reachable from the index or its shortcut button.
 
 On the SEQUENCERS page, OCT past SEQ 3 to KEYS: a piano roll of up to 16 steps, one note at a time, laid out as the
 Fairlight's page R. Four steps show at a time, with a page for each four (PG 1/4 and so on); the page follows the cursor
-while you edit, and the playhead while it runs. Under the steps is a row of triangles: the step playing "boops" up.
+while you edit, and the playhead while it runs. Under the lane are four triangles, from its bottom-left corner to its
+bottom-right, the middle two with grid lines up through the roll: the one nearest the playhead "boops" up (when it's
+stopped, the one nearest the cursor), so one is always up.
 
 - **Placing notes.** PLAY brings up a note bar, flashing. PRESETS moves it up and down, ALGORITHM along (on to the next page and back), SELECT makes it
   longer (clockwise) or shorter. PLAY again puts it down. PLAY on a note picks it up to move it; SEL drops the bar

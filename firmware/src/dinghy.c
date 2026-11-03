@@ -2036,7 +2036,7 @@ static void draw_keys(void)
     uint32_t steps = q->steps < 1u ? 1u : q->steps > KS_MAX ? KS_MAX : q->steps, r, j, pos = ks_pos_v, blink = (fm1_ms / 200u) & 1u;
     uint32_t pg = (q->run && !kc_place && fm1_ms - t_kedit > 3000u ? pos : kc_pos) / KS_SPP, p0 = pg * KS_SPP;
     uint32_t npg = (steps + KS_SPP - 1u) / KS_SPP;
-    const int32_t x0 = 26, sw = 52, y0 = 2, rh = 8;
+    const int32_t x0 = 26, sw = 51, y0 = 2, rh = 8, lw = 4 * 51;   /* (lw: the lane, four steps exactly) */
     char s[40];
     if (kc_note > kv_top) kv_top = kc_note;
     if (kc_note + KV_ROWS - 1u < kv_top) kv_top = kc_note + KV_ROWS - 1u;
@@ -2070,11 +2070,20 @@ static void draw_keys(void)
             else if (a0 == kc_pos) { cv_rect(x, y, 1, rh, PH_HI); cv_rect(x, y + rh - 1, w, 1, PH_HI); }
         }
     }
-    for (j = 0; j < KS_SPP; j++) {              /* the step triangles: the one playing boops up, brighter */
-        uint32_t st = p0 + j, on = q->run && st == pos, h = on ? 7u : 5u, k;
-        int32_t xc = x0 + (int32_t)j * sw + sw / 2, apex = on ? 115 : 119;
-        uint16_t c = st >= steps ? PH_LO : on ? PH_HI : PH_MID;
-        for (k = 0; k <= h; k++) cv_rect(xc - (int32_t)k, apex + (int32_t)k, 2 * (int32_t)k + 1, 1, c);
+    {   /* page R's triangles: four along the lane, the first at its left corner, the last at its right, the middle two
+         * with their lines up through the roll; the one nearest where the playhead is (running, on this page: its step
+         * and how far through it) or the cursor is boops up, brighter: always one */
+        int32_t pc, bo;                         /* the place along the lane, Q8 steps */
+        if (q->run && pos >= p0 && pos < p0 + KS_SPP) {
+            int32_t f = kt_dur ? (int32_t)((fm1_ms - kt_tick) * 256u / kt_dur) : 0;
+            pc = (int32_t)(pos - p0) * 256 + cl(f, 0, 255);
+        } else pc = (int32_t)(kc_pos >= p0 ? kc_pos - p0 : 0u) * 256;
+        bo = cl((pc * 3 + 512) / 1024, 0, 3);
+        for (j = 0; j < 4u; j++) {
+            int32_t xc = x0 + lw * (int32_t)j / 3, on = (int32_t)j == bo, h = on ? 7 : 5, apex = on ? 115 : 119, k;
+            if (j == 1u || j == 2u) for (k = y0; k < 113; k += 2) cv_pset(xc, k, PH_LO);
+            for (k = 0; k <= h; k++) cv_rect(xc - k, apex + k, 2 * k + 1, 1, on ? PH_HI : PH_MID);
+        }
     }
     s[0] = 0; s_note(s, kc_note); s_cat(s, " STEP "); s_int(s, (int32_t)kc_pos + 1); s_cat(s, " LEN "); s_int(s, (int32_t)kc_len);
     s_cat(s, "  PG "); s_int(s, (int32_t)pg + 1); s_cat(s, "/"); s_int(s, (int32_t)npg);
