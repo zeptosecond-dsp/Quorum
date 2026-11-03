@@ -36,7 +36,7 @@
  * Rules of the road (the chip has no FPU and no libgcc): integers only, no float, no 64-bit division.
  * tests/host.c runs this file on a computer: the screen as a PNG, the sound as a WAV. */
 #define APP_NAME "QUORUM"
-#define Q_VERSION "1.1"
+#define Q_VERSION "1.1.1"
 static void app_idle(void);
 #define LCD_IDLE app_idle                       /* while the screen's DMA runs: the clock and MIDI keep going */
 #define CV_MAX (240u * 218u)                    /* the page body's canvas */
