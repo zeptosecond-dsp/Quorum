@@ -7,7 +7,7 @@ generative, evolving soundscapes, where cellular automata decide which harmonics
 early digital machines.
 
 Quorum is the sister of [Arcturus S6](https://github.com/zeptosecond-dsp/Arcturus-S6). Arcturus sweeps wavetables; Quorum builds its sound from 64
-sine partials in the manner of the Kawai K5, and lets two rows of cellular automata switch them on and off. Strikes
+sine partials in a manner inspired by the additive synthesis mode on the Fairlight CMI IIx, and lets two rows of cellular automata switch them on and off. Strikes
 ring parts of the overtone series by hand or by logic, every partial is split into two paths with their own filters,
 and Serge-style modulators, sequencers and two patch matrices keep the whole thing moving. The engine runs at 22.05kHz
 in 12 bit (or 8 bit, after the Fairlight CMI's first models), and the screen is a phosphor CRT with Fairlight-style
